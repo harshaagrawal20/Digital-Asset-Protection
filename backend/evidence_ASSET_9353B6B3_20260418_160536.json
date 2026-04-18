@@ -1,0 +1,54 @@
+{
+  "report_generated_at": "2026-04-18T10:35:36.015145+00:00",
+  "asset": {
+    "asset_id": "ASSET_9353B6B3",
+    "name": "Goal Clip Final",
+    "owner_org": "SportsCorp",
+    "phash": "cf46b130cf9a2639",
+    "dna_combined": "cf46b130cf9a2639|0.164,0.167,0.220,0.362,0.438,0.366,0.315,0.281,0.231,0.179,0.2...",
+    "registered_at": "2026-04-18T10:32:15.407808+00:00"
+  },
+  "custody_trail": [
+    {
+      "entry_id": 3,
+      "asset_id": "ASSET_9353B6B3",
+      "event_type": "violated",
+      "recipient": "UNKNOWN/UNAUTHORIZED",
+      "notes": "Detected copy at path: suspect.png | Hamming: 4",
+      "timestamp": "2026-04-18T10:33:56.274377+00:00",
+      "hmac_sig": "32919184cc24a0d0547722e3431be5754c788c20883bb6bd796039fc5095cd26"
+    },
+    {
+      "entry_id": 4,
+      "asset_id": "ASSET_9353B6B3",
+      "event_type": "licensed",
+      "recipient": "Social Team",
+      "notes": "instagram use",
+      "timestamp": "2026-04-18T10:34:46.762243+00:00",
+      "hmac_sig": "8e97cfd41c445b06582c3e56d75e3ef5d176bbc04a590a331c528f0f897391e0"
+    }
+  ],
+  "tamper_verification": [
+    {
+      "entry_id": 3,
+      "valid": true
+    },
+    {
+      "entry_id": 4,
+      "valid": true
+    }
+  ],
+  "violations_detected": 1,
+  "violation_events": [
+    {
+      "entry_id": 3,
+      "asset_id": "ASSET_9353B6B3",
+      "event_type": "violated",
+      "recipient": "UNKNOWN/UNAUTHORIZED",
+      "notes": "Detected copy at path: suspect.png | Hamming: 4",
+      "timestamp": "2026-04-18T10:33:56.274377+00:00",
+      "hmac_sig": "32919184cc24a0d0547722e3431be5754c788c20883bb6bd796039fc5095cd26"
+    }
+  ],
+  "all_entries_valid": true
+}

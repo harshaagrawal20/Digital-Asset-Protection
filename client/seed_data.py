@@ -39,8 +39,8 @@ def seed():
             "asset_id": "ASSET_001",
             "name": "IPL 2026 Final - Match Highlight Clip",
             "owner_org": "Board of Control for Cricket in India",
-            "phash": "a4c3f2e1b8d7c6a5",
-            "histogram_sig": "0.12,0.08,0.15,0.22,0.18,0.09,0.07,0.09",
+            "phash": "cf46b130cf9a2639",
+            "histogram_sig": "0.164,0.167,0.220,0.362,0.438,0.366,0.315,0.281",
             "registered_at": (base_time).isoformat(),
         },
         {

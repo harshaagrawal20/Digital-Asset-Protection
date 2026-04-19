@@ -12,6 +12,15 @@ import json
 import os
 import tempfile
 from datetime import datetime
+import sys
+
+# Configure environment and paths for the unified system BEFORE loading internal modules
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(project_root)
+sys.path.append(os.path.join(project_root, 'backend'))
+sys.path.append(os.path.join(project_root, 'bait'))
+
+os.environ["DB_PATH"] = os.path.join(project_root, 'assets.db')
 
 import api
 import bait_api
@@ -422,9 +431,7 @@ with st.sidebar:
     # System status
     st.markdown("---")
     st.markdown("**System Status**")
-    db_exists = os.path.exists(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets.db")
-    )
+    db_exists = os.path.exists(os.environ.get("DB_PATH", ""))
     st.markdown(f"Database: {'Connected' if db_exists else 'Not Found'}")
     st.markdown(f"Assets loaded: {total_assets}")
     st.markdown(f"Baits tracked: {len(baits)}")
@@ -609,14 +616,21 @@ with tab2:
             # HMAC verification
             import hmac as hmac_module
             import hashlib as hashlib_module
-            HMAC_KEY = b"digital_asset_protection_secret_2026"
+            # Both keys: Person C seed data key + Person A production key
+            HMAC_KEYS = [
+                b"digital_asset_protection_secret_2026",
+                b"change_this_in_production_32bytes!",
+            ]
 
             def verify_entry_hmac(entry):
                 fields = [entry["asset_id"], entry["event_type"],
-                          entry["recipient"], entry["notes"], entry["timestamp"]]
+                          entry["recipient"], entry["notes"] or "", entry["timestamp"]]
                 message = "|".join(str(f) for f in fields)
-                expected = hmac_module.new(HMAC_KEY, message.encode(), hashlib_module.sha256).hexdigest()
-                return hmac_module.compare_digest(expected, entry.get("hmac_sig", ""))
+                for key in HMAC_KEYS:
+                    expected = hmac_module.new(key, message.encode(), hashlib_module.sha256).hexdigest()
+                    if hmac_module.compare_digest(expected, entry.get("hmac_sig", "")):
+                        return True
+                return False
 
             # Timeline view
             st.markdown('<div class="section-header">Event Timeline</div>', unsafe_allow_html=True)

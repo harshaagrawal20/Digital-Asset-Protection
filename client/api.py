@@ -1,64 +1,45 @@
 """
-Person A's API -- Mock implementation for Person C's dashboard.
-Replace these with real imports from Person A's module on Day 2.
-
-Function signatures locked at Day 1 morning:
-  - get_asset_list()
-  - get_custody_trail(asset_id)
-  - verify_image(image_path)
+Integration adapter for Person A's backend module.
+Queries the shared database directly for full column data,
+and calls Person A's verify_image for real fingerprint comparison.
 """
-
 import sqlite3
-import hashlib
 import os
-from db_schema import get_connection
+
+
+def _get_conn():
+    """Get connection to the shared database with Row factory."""
+    db_path = os.environ.get("DB_PATH", "assets.db")
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def get_asset_list():
-    """
-    Return all registered assets from the asset_registry table.
-    Returns: list of dicts, each with all asset_registry columns.
-    """
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM asset_registry ORDER BY registered_at DESC")
-    rows = cursor.fetchall()
+    """Return all registered assets as list of dicts with ALL columns."""
+    conn = _get_conn()
+    rows = conn.execute(
+        "SELECT * FROM asset_registry ORDER BY registered_at DESC"
+    ).fetchall()
     conn.close()
     return [dict(row) for row in rows]
 
 
 def get_custody_trail(asset_id: str):
-    """
-    Return the full chain of custody for a given asset.
-    Returns: list of dicts from custody_ledger, ordered by timestamp.
-    """
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
+    """Return full custody trail for an asset as list of dicts."""
+    conn = _get_conn()
+    rows = conn.execute(
         "SELECT * FROM custody_ledger WHERE asset_id = ? ORDER BY timestamp ASC",
         (asset_id,)
-    )
-    rows = cursor.fetchall()
+    ).fetchall()
     conn.close()
     return [dict(row) for row in rows]
 
 
 def verify_image(image_path: str):
     """
-    Verify an uploaded image against the asset registry.
-    In the real implementation (Person A), this computes pHash + histogram
-    and matches against registered assets.
-
-    Mock implementation: returns a match against ASSET_001 with high confidence
-    to demonstrate the dashboard flow.
-
-    Returns: dict with keys:
-        - matched (bool)
-        - asset_id (str or None)
-        - asset_name (str or None)
-        - confidence (float 0-1)
-        - phash_distance (int)
-        - details (str)
+    Call Person A's real fingerprint engine to verify a suspect image.
+    Maps their response format to what the dashboard UI expects.
     """
     if not image_path or not os.path.exists(image_path):
         return {
@@ -70,29 +51,37 @@ def verify_image(image_path: str):
             "details": "File not found or invalid path."
         }
 
-    # Mock: always match to ASSET_001 for demo purposes
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM asset_registry WHERE asset_id = 'ASSET_001'")
-    row = cursor.fetchone()
-    conn.close()
+    try:
+        # Use Person A's real verify_image engine
+        from verify_asset import verify_image as backend_verify
+        res = backend_verify(image_path)
 
-    if row:
+        if res.get("match"):
+            confidence = 1.0 - (res.get("hamming_distance", 0) / 64.0)
+            return {
+                "matched": True,
+                "asset_id": res.get("asset_id"),
+                "asset_name": res.get("name"),
+                "confidence": round(confidence, 2),
+                "phash_distance": res.get("hamming_distance", 0),
+                "details": f"Perceptual hash match found. Hamming distance: {res.get('hamming_distance', 0)} "
+                           f"(threshold: 12). Asset belongs to {res.get('owner_org', 'Unknown')}."
+            }
+        else:
+            return {
+                "matched": False,
+                "asset_id": None,
+                "asset_name": None,
+                "confidence": 0.0,
+                "phash_distance": -1,
+                "details": "No matching asset found in registry."
+            }
+    except Exception as e:
         return {
-            "matched": True,
-            "asset_id": row["asset_id"],
-            "asset_name": row["name"],
-            "confidence": 0.94,
-            "phash_distance": 3,
-            "details": "Perceptual hash match found. Hamming distance: 3 (threshold: 10). "
-                       "Histogram correlation: 0.91. Image appears to be a resized/compressed copy."
+            "matched": False,
+            "asset_id": None,
+            "asset_name": None,
+            "confidence": 0.0,
+            "phash_distance": -1,
+            "details": f"Verification error: {str(e)}"
         }
-
-    return {
-        "matched": False,
-        "asset_id": None,
-        "asset_name": None,
-        "confidence": 0.0,
-        "phash_distance": -1,
-        "details": "No matching asset found in registry."
-    }
